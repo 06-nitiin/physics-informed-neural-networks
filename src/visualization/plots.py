@@ -41,3 +41,39 @@ def save_cooling_results(
     figure.tight_layout()
     figure.savefig(output_path, bbox_inches="tight")
     plt.close(figure)
+
+def save_oscillator_results(
+    time: np.ndarray,
+    pinn_state: np.ndarray,
+    reference_state: np.ndarray,
+    total_loss: Sequence[float],
+    output_path: str | Path,
+) -> None:
+    plt.rcParams.update(
+        {
+            "figure.dpi": 130,
+            "font.family": "DejaVu Sans",
+            "axes.grid": True,
+            "axes.spines.top": False,
+            "axes.spines.right": False,
+        }
+    )
+
+    figure, axes = plt.subplots(1, 3, figsize=(14, 4.2))
+    labels = ("Position x(t)", "Velocity v(t)")
+
+    for index, label in enumerate(labels):
+        axes[index].plot(time, reference_state[:, index], label="Numerical reference", linewidth=2.2)
+        axes[index].plot(time, pinn_state[:, index], "--", label="PINN prediction", linewidth=2.2)
+        axes[index].set_title(label)
+        axes[index].set_xlabel("Time")
+        axes[index].legend()
+
+    axes[2].semilogy(total_loss, color="tab:red", linewidth=2)
+    axes[2].set_title("PINN training loss")
+    axes[2].set_xlabel("Epoch")
+    axes[2].set_ylabel("Total loss")
+
+    figure.tight_layout()
+    figure.savefig(output_path, bbox_inches="tight")
+    plt.close(figure)
