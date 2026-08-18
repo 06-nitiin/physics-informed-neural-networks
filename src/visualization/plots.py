@@ -42,6 +42,7 @@ def save_cooling_results(
     figure.savefig(output_path, bbox_inches="tight")
     plt.close(figure)
 
+
 def save_oscillator_results(
     time: np.ndarray,
     pinn_state: np.ndarray,
@@ -75,5 +76,48 @@ def save_oscillator_results(
     axes[2].set_ylabel("Total loss")
 
     figure.tight_layout()
+    figure.savefig(output_path, bbox_inches="tight")
+    plt.close(figure)
+
+
+def save_burgers_results(
+    x: np.ndarray,
+    time: np.ndarray,
+    pinn_solution: np.ndarray,
+    reference_solution: np.ndarray,
+    output_path: str | Path,
+) -> None:
+    plt.rcParams.update(
+        {
+            "figure.dpi": 130,
+            "font.family": "DejaVu Sans",
+            "axes.grid": False,
+            "axes.spines.top": False,
+            "axes.spines.right": False,
+        }
+    )
+
+    extent = [x.min(), x.max(), time.min(), time.max()]
+    error = pinn_solution - reference_solution
+    figure, axes = plt.subplots(1, 3, figsize=(15, 4.4), constrained_layout=True)
+
+    panels = (
+        (pinn_solution, "PINN solution", "coolwarm"),
+        (reference_solution, "Finite-difference reference", "coolwarm"),
+        (error, "PINN error", "seismic"),
+    )
+    for axis, (values, title, color_map) in zip(axes, panels):
+        image = axis.imshow(
+            values,
+            extent=extent,
+            origin="lower",
+            aspect="auto",
+            cmap=color_map,
+        )
+        axis.set_title(title)
+        axis.set_xlabel("Position x")
+        axis.set_ylabel("Time t")
+        figure.colorbar(image, ax=axis, shrink=0.88)
+
     figure.savefig(output_path, bbox_inches="tight")
     plt.close(figure)
