@@ -1,3 +1,4 @@
+"""Train and evaluate a physics-informed neural network for Newton's cooling."""
 from __future__ import annotations
 
 import argparse
@@ -25,17 +26,20 @@ from visualization.plots import save_cooling_results
 
 @dataclass(frozen=True)
 class CoolingTrainingConfig:
+    """Training choices kept separate from the physical cooling parameters."""
 
     epochs: int = 1_500
     learning_rate: float = 1e-3
     collocation_points: int = 96
     hidden_layers: tuple[int, ...] = (32, 32)
+    activation: str = "tanh"
     seed: int = 7
     print_every: int = 250
 
 
 @dataclass
 class CoolingRun:
+    """Outputs needed to evaluate and visualise one reproducible training run."""
 
     time: np.ndarray
     pinn_temperature: np.ndarray
@@ -45,11 +49,19 @@ class CoolingRun:
 
 
 def train_cooling(config: CoolingTrainingConfig) -> CoolingRun:
+    """Train a PINN from the cooling physics residual and initial condition."""
     torch.manual_seed(config.seed)
     np.random.seed(config.seed)
 
     physical_config = CoolingConfig()
-    model = MLP(MLPConfig(input_dim=1, output_dim=1, hidden_layers=config.hidden_layers))
+    model = MLP(
+        MLPConfig(
+            input_dim=1,
+            output_dim=1,
+            hidden_layers=config.hidden_layers,
+            activation=config.activation,
+        )
+    )
     optimizer = torch.optim.Adam(model.parameters(), lr=config.learning_rate)
     trainer = PINNTrainer(model, optimizer)
 
@@ -87,6 +99,7 @@ def train_cooling(config: CoolingTrainingConfig) -> CoolingRun:
 
 
 def main() -> None:
+    """Run the experiment from the command line and save reproducible outputs."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--epochs", type=int, default=1_500)
     parser.add_argument("--output-dir", type=Path, default=PROJECT_ROOT / "results")
